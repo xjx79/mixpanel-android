@@ -5,9 +5,12 @@ import android.util.SparseArray;
 
 import com.mixpanel.android.util.MPLog;
 
+import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -16,10 +19,9 @@ import java.util.Map;
  */
 public abstract class ResourceReader implements ResourceIds {
 
-    public static class Ids extends ResourceReader {
-        public Ids(String resourcePackageName, Context context) {
-            super(context);
-            mResourcePackageName = resourcePackageName;
+    public static class Id extends ResourceReader {
+        public Id(String resourcePackageName, Context context) {
+            super(resourcePackageName, context);
             initialize();
         }
 
@@ -30,16 +32,13 @@ public abstract class ResourceReader implements ResourceIds {
 
         @Override
         protected String getLocalClassName(Context context) {
-            return mResourcePackageName + ".R$id";
+            return super.mResourcePackageName + ".R$id";
         }
-
-        private final String mResourcePackageName;
     }
 
-    public static class Drawables extends ResourceReader {
-        protected Drawables(String resourcePackageName, Context context) {
-            super(context);
-            mResourcePackageName = resourcePackageName;
+    public static class Drawable extends ResourceReader {
+        protected Drawable(String resourcePackageName, Context context) {
+            super(resourcePackageName, context);
             initialize();
         }
 
@@ -50,16 +49,14 @@ public abstract class ResourceReader implements ResourceIds {
 
         @Override
         protected String getLocalClassName(Context context) {
-            return mResourcePackageName + ".R$drawable";
+            return super.mResourcePackageName + ".R$drawable";
         }
 
-        private final String mResourcePackageName;
     }
 
     public static class Mipmap extends ResourceReader {
         public Mipmap(String resourcePackageName, Context context) {
-            super(context);
-            mResourcePackageName = resourcePackageName;
+            super(resourcePackageName, context);
             initialize();
         }
 
@@ -70,13 +67,12 @@ public abstract class ResourceReader implements ResourceIds {
 
         @Override
         protected String getLocalClassName(Context context) {
-            return mResourcePackageName + ".R$mipmap";
+            return super.mResourcePackageName + ".R$mipmap";
         }
-
-        private final String mResourcePackageName;
     }
 
-    protected ResourceReader(Context context) {
+    protected ResourceReader(String resourcePackageName, Context context) {
+        mResourcePackageName = resourcePackageName;
         mContext = context;
         mIdNameToId = new HashMap<String, Integer>();
         mIdToIdName = new SparseArray<String>();
@@ -129,6 +125,16 @@ public abstract class ResourceReader implements ResourceIds {
         }
     }
 
+    protected List<String> getLocalClassNames() {
+        ArrayList<String> localClassNames = new ArrayList<>();
+        for (Class c : ResourceReader.class.getDeclaredClasses()) {
+            localClassNames.add(mResourcePackageName + ".R$" + c.getSimpleName().toLowerCase());
+        }
+
+        return localClassNames;
+    }
+
+
     protected abstract Class<?> getSystemClass();
     protected abstract String getLocalClassName(Context context);
 
@@ -139,12 +145,16 @@ public abstract class ResourceReader implements ResourceIds {
         final Class<?> sysIdClass = getSystemClass();
         readClassIds(sysIdClass, "android", mIdNameToId);
 
-        final String localClassName = getLocalClassName(mContext);
+        final List<String> localClassNames = getLocalClassNames();
+        String className = getLocalClassName(mContext);
         try {
-            final Class<?> rIdClass = Class.forName(localClassName);
-            readClassIds(rIdClass, null, mIdNameToId);
+            for (String localClassName : localClassNames) {
+                className = localClassName;
+                final Class<?> rIdClass = Class.forName(localClassName);
+                readClassIds(rIdClass, null, mIdNameToId);
+            }
         } catch (ClassNotFoundException e) {
-            MPLog.w(LOGTAG, "Can't load names for Android view ids from '" + localClassName + "', ids by name will not be available in the events editor.");
+            MPLog.w(LOGTAG, "Can't load names for Android view ids from '" + className + "', ids by name will not be available in the events editor.");
             MPLog.i(LOGTAG,
                     "You may be missing a Resources class for your package due to your proguard configuration, " +
                             "or you may be using an applicationId in your build that isn't the same as the package declared in your AndroidManifest.xml file.\n" +
@@ -165,6 +175,7 @@ public abstract class ResourceReader implements ResourceIds {
         }
     }
 
+    private final String mResourcePackageName;
     private final Context mContext;
     private final Map<String, Integer> mIdNameToId;
     private final SparseArray<String> mIdToIdName;

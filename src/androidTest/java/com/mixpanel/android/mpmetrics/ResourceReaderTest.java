@@ -5,8 +5,8 @@ import android.test.AndroidTestCase;
 
 public class ResourceReaderTest extends AndroidTestCase {
     public void setUp() {
-        mDrawables = new ResourceReader.Drawables(TEST_PACKAGE_NAME, getContext());
-        mIds = new ResourceReader.Ids(TEST_PACKAGE_NAME, getContext());
+        mDrawables = new ResourceReader.Drawable(TEST_PACKAGE_NAME, getContext());
+        mIds = new ResourceReader.Id(TEST_PACKAGE_NAME, getContext());
     }
 
     public void testLocalIdExists() {
@@ -37,8 +37,8 @@ public class ResourceReaderTest extends AndroidTestCase {
         assertNull(mIds.nameForId(0x7f098888));
     }
 
-    private ResourceReader.Drawables mDrawables;
-    private ResourceReader.Ids mIds;
+    private ResourceReader.Drawable mDrawables;
+    private ResourceReader.Id mIds;
 
     private static final String TEST_PACKAGE_NAME = "com.mixpanel.android.mpmetrics.test_r_package";
     private static final Class<?> RESOURCES_CLASS = com.mixpanel.android.mpmetrics.test_r_package.R.class;

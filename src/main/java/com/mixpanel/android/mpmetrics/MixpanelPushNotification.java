@@ -50,6 +50,7 @@ public class MixpanelPushNotification {
     private static final String DATETIME_ZULU_TZ = "yyyy-MM-dd'T'HH:mm:ss'Z'";
     private Context mContext;
     private ResourceIds mDrawableIds;
+    private ResourceIds mMipmapIds;
     private Notification.Builder mBuilder;
     private long mNow;
     private MixpanelNotificationData mData;
@@ -64,6 +65,7 @@ public class MixpanelPushNotification {
         this.mContext = context;
         this.mBuilder = builder;
         this.mDrawableIds = getResourceIds(ResourceReader.DRAWABLE_TYPE, context);
+        this.mMipmapIds = getResourceIds(ResourceReader.MIPMAP_TYPE, context);
         this.mNow = now;
         this.ROUTING_REQUEST_CODE = (int) now;
         this.notificationId = (int) now;
@@ -200,13 +202,11 @@ public class MixpanelPushNotification {
 
         int notificationIcon = MixpanelNotificationData.NOT_SET;
 
-        ResourceIds resource = mDrawableIds;
         if (iconName != null) {
             if (mDrawableIds.knownIdName(iconName)) {
-                notificationIcon = resource.idFromName(iconName);
-            } else if ((resource = getResourceIds(ResourceReader.MIPMAP_TYPE, mContext)).knownIdName(iconName)) {
-                notificationIcon = resource.idFromName(iconName);
-                resource = mDrawableIds;
+                notificationIcon = mDrawableIds.idFromName(iconName);
+            } else if (mMipmapIds.knownIdName(iconName)) { //should find mipmap ids in Drawable since ResourceReader links resources
+                notificationIcon = mMipmapIds.idFromName(iconName);
             }
         }
         if (notificationIcon == MixpanelNotificationData.NOT_SET) {
@@ -217,9 +217,9 @@ public class MixpanelPushNotification {
         int whiteNotificationIcon = MixpanelNotificationData.NOT_SET;
         if (whiteIconName != null) {
             if (mDrawableIds.knownIdName(whiteIconName)) {
-                whiteNotificationIcon = resource.idFromName(whiteIconName);
-            } else if ((resource = getResourceIds(ResourceReader.MIPMAP_TYPE, mContext)).knownIdName(iconName)) {
-                whiteNotificationIcon = resource.idFromName(iconName);
+                whiteNotificationIcon = mDrawableIds.idFromName(whiteIconName);
+            } else if (mMipmapIds.knownIdName(iconName)) {
+                whiteNotificationIcon = mMipmapIds.idFromName(iconName);
             }
         }
         mData.setWhiteIcon(whiteNotificationIcon);
@@ -688,12 +688,12 @@ public class MixpanelPushNotification {
 
         switch (resourceType) {
             case ResourceReader.ID_TYPE:
-                return new ResourceReader.Ids(resourcePackage, context);
+                return new ResourceReader.Id(resourcePackage, context);
             case ResourceReader.MIPMAP_TYPE:
                 return new ResourceReader.Mipmap(resourcePackage, context);
             case ResourceReader.DRAWABLE_TYPE:
             default:
-                return new ResourceReader.Drawables(resourcePackage, context);
+                return new ResourceReader.Drawable(resourcePackage, context);
         }
 
     }

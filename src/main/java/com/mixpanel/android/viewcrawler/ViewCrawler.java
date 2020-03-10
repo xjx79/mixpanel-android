@@ -297,7 +297,7 @@ public class ViewCrawler implements UpdatesFromMixpanel, TrackingDebug, ViewVisi
                 resourcePackage = context.getPackageName();
             }
 
-            final ResourceIds resourceIds = new ResourceReader.Ids(resourcePackage, context);
+            final ResourceIds resourceIds = new ResourceReader.Id(resourcePackage, context);
 
             mImageStore = new ImageStore(context, "ViewCrawler");
             mProtocol = new EditProtocol(context, resourceIds, mImageStore, layoutErrorListener);
